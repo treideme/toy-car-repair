@@ -5,16 +5,20 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "main.h"
 #include "dac.h"
 #include "fatfs.h"
 #include "sdio.h"
 #include "gpio.h"
 
+#include "bsp_driver_sd.h"
+
 extern void SystemClock_Config(void); // Not exported by CubeMX
 extern void initialise_monitor_handles(void); // Enable Semihosting
-char semihosting_stdout_buf[16];
-char semihosting_stderr_buf[16];
+static char semihosting_stdout_buf[16];
+static char semihosting_stderr_buf[16];
+static char buffer[16384];
 
 /**
  * @brief  The application entry point.
@@ -38,6 +42,49 @@ int main(void) {
   MX_SDIO_SD_Init();
   MX_DAC_Init();
   MX_FATFS_Init();
+
+  /* Check that FatFS was properly initialized */
+  if(retSD != 0) {
+    printf("Error Initializing FatFS\r\n");
+    for(;;);
+  }
+
+  FRESULT res;
+
+  if((res = f_mount(&SDFatFS, SDPath, 1)) != FR_OK) {
+    printf("Error Mounting uSD: %i\r\n", res);
+    for(;;);
+  }
+  printf(" Path: %s\r\n", SDPath);
+
+  printf("=== List Files ===\r\n");
+  DIR dir;
+  FILINFO fno;
+  res = f_opendir(&dir, "/"); /* Open the directory */
+  if (res == FR_OK) {
+    for (;;) {
+      res = f_readdir(&dir, &fno); /* Read a directory item */
+      if (res != FR_OK || fno.fname[0] == 0)
+        break; /* Break on error or end of dir */
+      printf(" %s\r\n", fno.fname);
+      int before = HAL_GetTick();
+      FIL fp;
+      res = f_open(&fp, fno.fname, FA_READ);
+      if(res != FR_OK)
+        printf("Error opening\r\n");
+      UINT sz = 16384;
+      while(res == FR_OK && sz >= 16384) {
+        res = f_read(&fp, buffer, 16384, &sz);
+        printf("Step: %i %i\r\n", res, sz);
+      }
+
+      int after = HAL_GetTick();
+      printf("File read in %i ms", (after-before));
+    }
+    f_closedir(&dir);
+  } else {
+    printf("f_opendir failed: %i\r\n", res);
+  }
 
   /* Infinite loop */
   for (;;) {
