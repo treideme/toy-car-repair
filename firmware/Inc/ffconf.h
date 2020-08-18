@@ -61,7 +61,7 @@
 #define _USE_MKFS            0
 /* This option switches f_mkfs() function. (0:Disable or 1:Enable) */
 
-#define _USE_FASTSEEK        1
+#define _USE_FASTSEEK        0
 /* This option switches fast seek feature. (0:Disable or 1:Enable) */
 
 #define	_USE_EXPAND		0
@@ -132,7 +132,7 @@
 /  To use Unicode string for the path name, enable LFN and set _LFN_UNICODE = 1.
 /  This option also affects behavior of string I/O functions. */
 
-#define _STRF_ENCODE    3
+#define _STRF_ENCODE    0
 /* When _LFN_UNICODE == 1, this option selects the character encoding ON THE FILE to
 /  be read/written via string I/O functions, f_gets(), f_putc(), f_puts and f_printf().
 /
@@ -204,7 +204,7 @@
 / System Configurations
 /----------------------------------------------------------------------------*/
 
-#define _FS_TINY    1      /* 0:Normal or 1:Tiny */
+#define _FS_TINY    0      /* 0:Normal or 1:Tiny */
 /* This option switches tiny buffer configuration. (0:Normal or 1:Tiny)
 /  At the tiny configuration, size of file object (FIL) is reduced _MAX_SS bytes.
 /  Instead of private sector buffer eliminated from the file object, common sector

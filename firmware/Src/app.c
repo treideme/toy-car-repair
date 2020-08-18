@@ -14,11 +14,13 @@
 
 #include "bsp_driver_sd.h"
 
+#define RSIZE 32768
+
 extern void SystemClock_Config(void); // Not exported by CubeMX
 extern void initialise_monitor_handles(void); // Enable Semihosting
 static char semihosting_stdout_buf[16];
 static char semihosting_stderr_buf[16];
-static char buffer[16384];
+static char buffer[RSIZE];
 
 /**
  * @brief  The application entry point.
@@ -72,14 +74,13 @@ int main(void) {
       res = f_open(&fp, fno.fname, FA_READ);
       if(res != FR_OK)
         printf("Error opening\r\n");
-      UINT sz = 16384;
-      while(res == FR_OK && sz >= 16384) {
-        res = f_read(&fp, buffer, 16384, &sz);
-        printf("Step: %i %i\r\n", res, sz);
+      UINT sz = RSIZE;
+      while(res == FR_OK && sz >= RSIZE) {
+        res = f_read(&fp, buffer, RSIZE, &sz);
       }
 
       int after = HAL_GetTick();
-      printf("File read in %i ms", (after-before));
+      printf("%i ms\r\n", (after-before));
     }
     f_closedir(&dir);
   } else {
@@ -88,8 +89,7 @@ int main(void) {
 
   /* Infinite loop */
   for (;;) {
-    printf("Hello world\r\n");
-    HAL_Delay(1000);
+
   }
 
 }
