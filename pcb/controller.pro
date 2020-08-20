@@ -1,4 +1,4 @@
-update=Tue 18 Aug 2020 11:01:22 AM EDT
+update=Wed 19 Aug 2020 07:45:02 PM EDT
 version=1
 last_client=kicad
 [pcbnew]
@@ -75,3 +75,4 @@ LibName33=lib/20021221-00010C4LF
 LibName34=lib/stm32
 LibName35=lib/PAM8403DR
 LibName36=lib/JQ1P-5V-F
+LibName37=lib/Connector_Generic_MountingPin
