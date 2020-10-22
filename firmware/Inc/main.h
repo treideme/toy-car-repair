@@ -59,6 +59,32 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define LAMP_OUT_Pin GPIO_PIN_0
+#define LAMP_OUT_GPIO_Port GPIOC
+#define LED_OUT_Pin GPIO_PIN_1
+#define LED_OUT_GPIO_Port GPIOC
+#define MOTOR_2_Pin GPIO_PIN_2
+#define MOTOR_2_GPIO_Port GPIOC
+#define MOTOR_1_Pin GPIO_PIN_3
+#define MOTOR_1_GPIO_Port GPIOC
+#define VOLUMNE_IN_Pin GPIO_PIN_5
+#define VOLUMNE_IN_GPIO_Port GPIOC
+#define MUSIC_BTN_Pin GPIO_PIN_0
+#define MUSIC_BTN_GPIO_Port GPIOB
+#define LEFT_BTN_Pin GPIO_PIN_1
+#define LEFT_BTN_GPIO_Port GPIOB
+#define HORN_BTN_Pin GPIO_PIN_2
+#define HORN_BTN_GPIO_Port GPIOB
+#define RIGHT_BTN_Pin GPIO_PIN_10
+#define RIGHT_BTN_GPIO_Port GPIOB
+#define LIGHT_BTN_Pin GPIO_PIN_11
+#define LIGHT_BTN_GPIO_Port GPIOB
+#define BWD_BTN_Pin GPIO_PIN_12
+#define BWD_BTN_GPIO_Port GPIOB
+#define FWD_BTN_Pin GPIO_PIN_13
+#define FWD_BTN_GPIO_Port GPIOB
+#define GAS_BTN_Pin GPIO_PIN_14
+#define GAS_BTN_GPIO_Port GPIOB
 #define SDIO_CD_Pin GPIO_PIN_15
 #define SDIO_CD_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
