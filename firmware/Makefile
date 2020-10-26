@@ -79,7 +79,8 @@ Middlewares/Third_Party/FatFs/src/option/syscall.c
 
 ## User files
 C_SOURCES += \
-	Src/app.c
+	Src/app.c \
+	Src/control.c
 
 # ASM sources
 ASM_SOURCES =  \
@@ -168,8 +169,9 @@ LDSCRIPT = STM32F405RGTx_FLASH.ld
 # libraries
 LIBS = -lc -lm -lnosys 
 LIBDIR = 
-#LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections
-LDFLAGS = $(MCU) $(SEMIHOSTING_FLAGS) -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections
+LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections
+# Enable this when running on debugger semihosting
+#LDFLAGS = $(MCU) $(SEMIHOSTING_FLAGS) -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections
 
 # default action: build all
 all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
