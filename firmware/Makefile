@@ -42,6 +42,7 @@ Src/main.c \
 Src/gpio.c \
 Src/adc.c \
 Src/dac.c \
+Src/tim.c \
 Src/bsp_driver_sd.c \
 Src/sd_diskio.c \
 Src/fatfs.c \

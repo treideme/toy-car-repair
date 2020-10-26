@@ -88,7 +88,7 @@ void Error_Handler(void);
 #define SDIO_CD_Pin GPIO_PIN_15
 #define SDIO_CD_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-
+extern void timer_callback(void);
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

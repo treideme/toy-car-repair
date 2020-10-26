@@ -15,6 +15,7 @@
 
 #include "bsp_driver_sd.h"
 #include "control.h"
+#include "tim.h"
 
 #define RSIZE 32768
 
@@ -30,6 +31,14 @@ static char buffer[RSIZE];
  */
 uint8_t BSP_SD_IsDetected(void) {
   return SD_PRESENT;
+}
+
+uint32_t last_ms = 0;
+
+void timer_callback(void) {
+  uint32_t ms = HAL_GetTick();
+  printf("TIM1 OC %i ms\n", (ms - last_ms));
+  last_ms = ms;
 }
 
 /**
@@ -54,6 +63,7 @@ int main(void) {
   MX_SDIO_SD_Init();
   MX_DAC_Init();
   MX_FATFS_Init();
+  MX_TIM1_Init();
 
   /* Check that FatFS was properly initialized */
   if(retSD != 0) {
@@ -96,6 +106,8 @@ int main(void) {
   } else {
     printf("f_opendir failed: %i\r\n", res);
   }
+  printf("Starting timer\r\n");
+  HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_1);
 
   /* Infinite loop */
   for (;;) {

@@ -24,6 +24,7 @@
 #include "dac.h"
 #include "fatfs.h"
 #include "sdio.h"
+#include "tim.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
