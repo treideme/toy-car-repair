@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include "main.h"
 #include "dac.h"
 #include "fatfs.h"
@@ -16,13 +17,23 @@
 #include "bsp_driver_sd.h"
 #include "control.h"
 #include "tim.h"
+#include "audio.h"
+#include "macro.h"
 
 #define RSIZE 32768
 
 extern void SystemClock_Config(void); // Not exported by CubeMX
 static char semihosting_stdout_buf[16];
 static char semihosting_stderr_buf[16];
-static char buffer[RSIZE];
+static audio_t player = {0};
+
+
+int string_ends_with(const char * str, const char * suffix) {
+  int str_len = strlen(str);
+  int suffix_len = strlen(suffix);
+
+  return (str_len >= suffix_len) && (0 == strcmp(str + (str_len-suffix_len), suffix));
+}
 
 /**
  * Override SD detection. SDIO driver assumes pull to ground, however,
@@ -33,12 +44,15 @@ uint8_t BSP_SD_IsDetected(void) {
   return SD_PRESENT;
 }
 
-uint32_t last_ms = 0;
-
 void timer_callback(void) {
-  uint32_t ms = HAL_GetTick();
-  printf("TIM1 OC %i ms\n", (ms - last_ms));
-  last_ms = ms;
+  uint16_t value = audio_next_12b(&player);
+  if(value != 0x800) {
+//  printf("TIM: 0x%03X\r\n", value);
+    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, value);
+    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, value);
+    HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
+    HAL_DAC_Start(&hdac, DAC_CHANNEL_2);
+  }
 }
 
 /**
@@ -63,7 +77,7 @@ int main(void) {
   MX_SDIO_SD_Init();
   MX_DAC_Init();
   MX_FATFS_Init();
-  MX_TIM1_Init();
+  MX_TIM10_Init();
 
   /* Check that FatFS was properly initialized */
   if(retSD != 0) {
@@ -77,6 +91,7 @@ int main(void) {
     printf("Error Mounting uSD: %i\r\n", res);
     for(;;);
   }
+  HAL_TIM_Base_Start_IT(&htim10);
   printf(" Path: %s\r\n", SDPath);
 
   printf("=== List Files ===\r\n");
@@ -88,27 +103,25 @@ int main(void) {
       res = f_readdir(&dir, &fno); /* Read a directory item */
       if (res != FR_OK || fno.fname[0] == 0)
         break; /* Break on error or end of dir */
-      printf(" %s\r\n", fno.fname);
-      int before = HAL_GetTick();
-      FIL fp;
-      res = f_open(&fp, fno.fname, FA_READ);
-      if(res != FR_OK)
-        printf("Error opening\r\n");
-      UINT sz = RSIZE;
-      while(res == FR_OK && sz >= RSIZE) {
-        res = f_read(&fp, buffer, RSIZE, &sz);
+      printf("%s\r\n", fno.fname);
+      if(string_ends_with(fno.fname, ".wav") || string_ends_with(fno.fname, ".WAV")) {
+        bool res = audio_playfile(&player, fno.fname);
+        if(res) {
+          printf("Found Audio file %s ... playing\r\n", fno.fname);
+        } else {
+          printf("Invalid Audio file %s\r\n", fno.fname);
+        }
+        while(AUDIO_BUSY(&player)) {
+          audio_update(&player, TIM1_UP_TIM10_IRQn);
+        }
       }
-
-      int after = HAL_GetTick();
-      printf("%i ms\r\n", (after-before));
     }
     f_closedir(&dir);
   } else {
     printf("f_opendir failed: %i\r\n", res);
   }
   printf("Starting timer\r\n");
-  HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_1);
-
+  HAL_TIM_Base_Start_IT(&htim10);
   /* Infinite loop */
   for (;;) {
     controls_update();

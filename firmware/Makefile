@@ -22,7 +22,7 @@ TARGET = firmware
 # debug build?
 DEBUG = 1
 # optimization
-OPT = -Os
+OPT = -Os -Werror
 
 # Semihosting flags
 SEMIHOSTING_FLAGS = --specs=rdimon.specs -lc -lrdimon
@@ -81,7 +81,9 @@ Middlewares/Third_Party/FatFs/src/option/syscall.c
 ## User files
 C_SOURCES += \
 	Src/app.c \
-	Src/control.c
+	Src/control.c \
+	Src/ringbuffer.c \
+	Src/audio.c \
 
 # ASM sources
 ASM_SOURCES =  \
