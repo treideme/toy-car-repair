@@ -140,14 +140,14 @@ static input_t s_inputs[] = {
 bool control_write_motor(motor_t *p_motor) {
   if(p_motor->forward_set && !p_motor->backward_set) { // Forward motion
     if(p_motor->running) {
-      HAL_GPIO_WritePin(p_motor->GPIO_bridge_1, p_motor->GPIO_Pin_bridge_1, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(p_motor->GPIO_bridge_2, p_motor->GPIO_Pin_bridge_2, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(p_motor->GPIO_bridge_1, p_motor->GPIO_Pin_bridge_1, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(p_motor->GPIO_bridge_2, p_motor->GPIO_Pin_bridge_2, GPIO_PIN_SET);
       return true;
     }
   } else if(!p_motor->forward_set && p_motor->backward_set) { // Backward motion
     if(p_motor->running) {
-      HAL_GPIO_WritePin(p_motor->GPIO_bridge_1, p_motor->GPIO_Pin_bridge_1, GPIO_PIN_RESET);
-      HAL_GPIO_WritePin(p_motor->GPIO_bridge_2, p_motor->GPIO_Pin_bridge_2, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(p_motor->GPIO_bridge_1, p_motor->GPIO_Pin_bridge_1, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(p_motor->GPIO_bridge_2, p_motor->GPIO_Pin_bridge_2, GPIO_PIN_RESET);
       return true;
     }
   }

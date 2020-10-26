@@ -24,6 +24,15 @@ static char semihosting_stderr_buf[16];
 static char buffer[RSIZE];
 
 /**
+ * Override SD detection. SDIO driver assumes pull to ground, however,
+ * by accident permanently pulled high.
+ * @return
+ */
+uint8_t BSP_SD_IsDetected(void) {
+  return SD_PRESENT;
+}
+
+/**
  * @brief  The application entry point.
  * @retval int
  */
@@ -52,41 +61,41 @@ int main(void) {
     for(;;);
   }
 
-//  FRESULT res;
-//
-//  if((res = f_mount(&SDFatFS, SDPath, 1)) != FR_OK) {
-//    printf("Error Mounting uSD: %i\r\n", res);
-//    for(;;);
-//  }
-//  printf(" Path: %s\r\n", SDPath);
-//
-//  printf("=== List Files ===\r\n");
-//  DIR dir;
-//  FILINFO fno;
-//  res = f_opendir(&dir, "/"); /* Open the directory */
-//  if (res == FR_OK) {
-//    for (;;) {
-//      res = f_readdir(&dir, &fno); /* Read a directory item */
-//      if (res != FR_OK || fno.fname[0] == 0)
-//        break; /* Break on error or end of dir */
-//      printf(" %s\r\n", fno.fname);
-//      int before = HAL_GetTick();
-//      FIL fp;
-//      res = f_open(&fp, fno.fname, FA_READ);
-//      if(res != FR_OK)
-//        printf("Error opening\r\n");
-//      UINT sz = RSIZE;
-//      while(res == FR_OK && sz >= RSIZE) {
-//        res = f_read(&fp, buffer, RSIZE, &sz);
-//      }
-//
-//      int after = HAL_GetTick();
-//      printf("%i ms\r\n", (after-before));
-//    }
-//    f_closedir(&dir);
-//  } else {
-//    printf("f_opendir failed: %i\r\n", res);
-//  }
+  FRESULT res;
+
+  if((res = f_mount(&SDFatFS, SDPath, 1)) != FR_OK) {
+    printf("Error Mounting uSD: %i\r\n", res);
+    for(;;);
+  }
+  printf(" Path: %s\r\n", SDPath);
+
+  printf("=== List Files ===\r\n");
+  DIR dir;
+  FILINFO fno;
+  res = f_opendir(&dir, "/"); /* Open the directory */
+  if (res == FR_OK) {
+    for (;;) {
+      res = f_readdir(&dir, &fno); /* Read a directory item */
+      if (res != FR_OK || fno.fname[0] == 0)
+        break; /* Break on error or end of dir */
+      printf(" %s\r\n", fno.fname);
+      int before = HAL_GetTick();
+      FIL fp;
+      res = f_open(&fp, fno.fname, FA_READ);
+      if(res != FR_OK)
+        printf("Error opening\r\n");
+      UINT sz = RSIZE;
+      while(res == FR_OK && sz >= RSIZE) {
+        res = f_read(&fp, buffer, RSIZE, &sz);
+      }
+
+      int after = HAL_GetTick();
+      printf("%i ms\r\n", (after-before));
+    }
+    f_closedir(&dir);
+  } else {
+    printf("f_opendir failed: %i\r\n", res);
+  }
 
   /* Infinite loop */
   for (;;) {
