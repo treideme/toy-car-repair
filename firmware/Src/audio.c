@@ -1,11 +1,11 @@
 #include "audio.h"
-#include <stdio.h>
+//#include <stdio.h>
 
 bool audio_playfile(audio_t *state, const char*fname) {
   audio_stop(state); // Stop playing if we were playing
   FRESULT res = f_open(&state->current_file, fname, FA_READ);
   if(res != FR_OK) {
-    printf("Could not open %s cause %i\r\n", fname, res);
+//    printf("Could not open %s cause %i\r\n", fname, res);
     return false;
   }
 
@@ -14,16 +14,17 @@ bool audio_playfile(audio_t *state, const char*fname) {
   res = f_read(&state->current_file, &header, sizeof(riff_header_t), &sz);
   if(res != FR_OK) {
     audio_stop(state);
-    printf("Could not read header\r\n");
+//    printf("Could not read header\r\n");
     return false;
   }
 
   // Sanity check header
   if((header.NumChannels != 1) || (header.BitsPerSample != 16) || (header.SampleRate != 16000)) {
-    printf("CH = %i BPS = %i Rate = %lu\r\n", header.NumChannels, header.BitsPerSample, header.SampleRate);
+//    printf("CH = %i BPS = %i Rate = %lu\r\n", header.NumChannels, header.BitsPerSample, header.SampleRate);
     audio_stop(state);
     return false;
   }
+//  printf("Successfully queued file: %s\r\n", fname);
   state->playing = true;
 
   return true;
@@ -31,14 +32,20 @@ bool audio_playfile(audio_t *state, const char*fname) {
 
 void audio_stop(audio_t *state) {
   if(state->playing) {
+//    printf("Stop\r\n");
     f_close(&state->current_file);
     state->playing = false;
+    // clear ring buffer
+    __disable_irq();
+    state->buffer.put = 0;
+    state->buffer.take = 0;
+    __enable_irq();
   }
   return;
 }
 
 void audio_update(audio_t*state, const IRQn_Type dac_update_irq) {
-  if(state->playing) {
+  if(AUDIO_BUSY(state)) {
 
     // Critical section, disable DAC IRQ
     HAL_NVIC_DisableIRQ(dac_update_irq);
@@ -50,7 +57,7 @@ void audio_update(audio_t*state, const IRQn_Type dac_update_irq) {
         FRESULT res = f_read(&state->current_file, state->io_buffer, available*2, &rsize); // *2 16-bit samples
         if((res != FR_OK) || (rsize == 0)) {
           audio_stop(state);
-//          printf("Read stoped %u %u", rsize, res);
+//          printf("Read stopped %u %u\r\n", rsize, res);
         } else {
           for(size_t i = 0; i < rsize/2; i++) {
             ringbuffer_put(&state->buffer, state->io_buffer[i]);

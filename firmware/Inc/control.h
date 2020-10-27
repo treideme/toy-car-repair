@@ -7,6 +7,7 @@
 #include "stm32f4xx_hal.h"
 #include "fatfs_platform.h"
 #include "main.h"
+#include "audio.h"
 
 typedef enum {
   INPUT_OFF,
@@ -34,6 +35,8 @@ typedef struct {
   GPIO_TypeDef* GPIO_bridge_2;
   uint16_t GPIO_Pin_bridge_2;
 } motor_t;
+
+bool controls_init();
 
 bool control_handle_input(input_t*p_input);
 

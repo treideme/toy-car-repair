@@ -1,8 +1,101 @@
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 #include "control.h"
 #include "stm32f405xx.h"
 #include "macro.h"
+#include "audio.h"
+#include "ff.h"
+#include "dac.h"
+
+static size_t s_total_songs = 0;
+static ssize_t s_current_song = 0;
+static audio_t player = {0};
+
+int string_ends_with(const char * str, const char * suffix) {
+  int str_len = strlen(str);
+  int suffix_len = strlen(suffix);
+
+  return (str_len >= suffix_len) && (0 == strcmp(str + (str_len-suffix_len), suffix));
+}
+
+void timer_callback(void) {
+  uint16_t value = audio_next_12b(&player);
+  if(value != 0x800) {
+//  printf("TIM: 0x%03X\r\n", value);
+    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, value);
+    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, value);
+    HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
+    HAL_DAC_Start(&hdac, DAC_CHANNEL_2);
+  }
+}
+
+bool controls_init() {
+//  printf("=== List Files ===\r\n");
+  FRESULT res;
+  DIR dir;
+  FILINFO fno;
+  res = f_opendir(&dir, "/"); /* Open the directory */
+  if (res == FR_OK) {
+//    printf("Opened Dir\r\n");
+    for (;;) {
+      res = f_readdir(&dir, &fno); /* Read a directory item */
+      if (res != FR_OK || fno.fname[0] == 0)
+        break; /* Break on error or end of dir */
+//      printf("%s\r\n", fno.fname);
+      if(string_ends_with(fno.fname, ".WAV")) {
+//        printf("Found %s\r\n", fno.fname);
+        if(strcmp("HORN.WAV", fno.fname) == 0) {
+          continue;
+        } else if(strcmp("ENGINE.WAV", fno.fname) == 0) {
+          continue;
+        } else {
+//          printf("Found song: %i %s\r\n", s_total_songs, fno.fname);
+          s_total_songs++;
+        }
+      }
+    }
+    f_closedir(&dir);
+    s_current_song = 0;
+    audio_playfile(&player, "ENGINE.WAV");
+    return true;
+  } else {
+//    printf("OpenDir failed: %i", res);
+    return false;
+  }
+}
+
+void play_song(size_t index) {
+  size_t local_count = 0;
+  if(index < s_total_songs) {
+//    printf("Valid Index %i\r\n", index);
+    FRESULT res;
+    DIR dir;
+    FILINFO fno;
+    res = f_opendir(&dir, "/"); /* Open the directory */
+    if (res == FR_OK) {
+      for (;;) {
+        res = f_readdir(&dir, &fno); /* Read a directory item */
+        if (res != FR_OK || fno.fname[0] == 0)
+          break; /* Break on error or end of dir */
+        if (string_ends_with(fno.fname, ".WAV")) {
+          if(strcmp("HORN.WAV", fno.fname) == 0) {
+            continue;
+          } else if(strcmp("ENGINE.WAV", fno.fname) == 0) {
+            continue;
+          } else {
+            if(local_count == index) {
+              audio_playfile(&player, fno.fname);
+            }
+            local_count++;
+          }
+        }
+      }
+      f_closedir(&dir);
+    }
+  }
+}
 
 bool control_handle_input(input_t*p_input) {
   input_state_t state;
@@ -42,45 +135,67 @@ static motor_t s_engine = {
 };
 
 static bool s_on_music(const input_state_t current, const input_state_t before) {
-  printf("On Music %i %i\r\n", current, before);
+  if(current) {
+    if(AUDIO_BUSY(&player)) {
+      audio_stop(&player);
+//      printf("Audio stopped\r\n");
+    } else {
+//      printf("Attempting to play %i\r\n", s_current_song);
+      play_song(s_current_song);
+    }
+  }
   return true;
 }
 
 static bool s_on_left(const input_state_t current, const input_state_t before) {
-  printf("On Left %i %i\r\n", current, before);
+  if(current) {
+    s_current_song--;
+    if(s_current_song < 0) {
+      s_current_song = s_total_songs-1;
+    }
+    play_song(s_current_song);
+  }
   return true;
 }
 
 static bool s_on_horn(const input_state_t current, const input_state_t before) {
-  printf("On Horn %i %i\r\n", current, before);
+  if(current) {
+    audio_playfile(&player, "HORN.WAV");
+  }
   return true;
 }
 
 static bool s_on_right(const input_state_t current, const input_state_t before) {
-  printf("On Right %i %i\r\n", current, before);
+  if(current) {
+    s_current_song++;
+    if(s_current_song >= s_total_songs) {
+      s_current_song = 0;
+    }
+    play_song(s_current_song);
+  }
   return true;
 }
 
 static bool s_on_light(const input_state_t current, const input_state_t before) {
-  printf("On Light %i %i\r\n", current, before);
+//  printf("On Light %i %i\r\n", current, before);
   HAL_GPIO_WritePin(LAMP_OUT_GPIO_Port, LAMP_OUT_Pin, current);
   return true;
 }
 
 static bool s_on_bwd(const input_state_t current, const input_state_t before) {
-  printf("On BWD %i %i\r\n", current, before);
+//  printf("On BWD %i %i\r\n", current, before);
   s_engine.backward_set = current;
   return true;
 }
 
 static bool s_on_fwd(const input_state_t current, const input_state_t before) {
-  printf("On FWD %i %i\r\n", current, before);
+//  printf("On FWD %i %i\r\n", current, before);
   s_engine.forward_set = current;
   return true;
 }
 
 static bool s_on_gas(const input_state_t current, const input_state_t before) {
-  printf("On Gas %i %i\r\n", current, before);
+//  printf("On Gas %i %i\r\n", current, before);
   s_engine.running = current;
   return true;
 }
@@ -168,6 +283,7 @@ bool controls_update() {
   }
   // Write LED to show on-state
   HAL_GPIO_WritePin(LED_OUT_GPIO_Port, LED_OUT_Pin, GPIO_PIN_SET);
+  audio_update(&player, TIM1_UP_TIM10_IRQn);
 
   return control_write_motor(&s_engine);
 }
