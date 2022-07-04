@@ -3,10 +3,10 @@
 This repo contains schematics, drawings, and firmware of the controller
 for my sons broken Mercedes.
 
-## 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+See [my blogpost](https://www.reidemeister.com/?p=465) for more information.
 
-Please make sure to update tests as appropriate.
+---- 
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 ## License
 [MIT](LICENSE.md)
